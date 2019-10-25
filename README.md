@@ -137,7 +137,7 @@ payload.Sort.Handle(func(sortElem kendohelper.SortElem) kendohelper.SortElem {
         sortElem.Field = ""
         sortElem.Dir = ""
     }
-    return filter
+    return sortElem
 })
 ```
 
