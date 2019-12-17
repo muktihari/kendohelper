@@ -226,3 +226,16 @@ func (f *Filter) ToAggregateFilter() toolkit.M {
 	}
 	return nil
 }
+
+// DeepCopyTo will copy filter as a branch new Filter to dest Filter
+func (f *Filter) DeepCopyTo(dest *Filter) {
+	*dest = *f
+	if f.Filters == nil {
+		return
+	}
+	dest.Filters = make([]Filter, len(f.Filters))
+	copy(dest.Filters, f.Filters)
+	for i := range f.Filters {
+		f.Filters[i].DeepCopyTo(&dest.Filters[i])
+	}
+}
