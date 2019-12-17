@@ -224,6 +224,26 @@ payload.Filter.Handle(func(filter kendohelper.Filter) kendohelper.Filter {
     return filter
 })
 ```
+
+### The Additional Func
+- Filter: 
+  - DeepCopyTo
+
+
+Filter has field "Filters" which is slice of Filter. In go, values of slice are passed by reference, to avoid making changes to the original Filter, use DeepCopyTo instead
+
+```go
+// DON'T DO:
+newFilter := payload.Filter
+newFilter.HandleField(strings.ToLower) // payload.Filter will also be affected
+
+// INSTEAD DO:
+newFilter := kendofilter.Filter{}
+payload.Filter.DeepCopyTo(&newFilter)
+newFilter.HandleField(strings.ToLower) // completely isolated, won't affect payload.Filter
+
+```
+
 ---
 
 ###### Thanks to [surya](https://github.com/dewanggasurya) and [radit](https://github.com/raditzlawliet) for supporting this project, any (usually unecessary) talk means a lot. :D - 2019
