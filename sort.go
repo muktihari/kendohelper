@@ -42,7 +42,7 @@ func (s *Sort) HandleField(handler func(field string) string) {
 func (s *Sort) ToDBOXSort() []string {
 	sort := []string{}
 	for _, v := range *s {
-		if v.Field == "" && v.Dir == "" {
+		if v.Dir != "asc" && v.Dir != "desc" {
 			continue
 		}
 		if v.Dir == "desc" {
@@ -57,7 +57,7 @@ func (s *Sort) ToDBOXSort() []string {
 func (s *Sort) ToAggregateSort() bson.D {
 	sort := bson.D{}
 	for _, v := range *s {
-		if v.Field == "" && v.Dir == "" {
+		if v.Dir != "asc" && v.Dir != "desc" {
 			continue
 		}
 		dir := 1
@@ -70,4 +70,23 @@ func (s *Sort) ToAggregateSort() bson.D {
 		})
 	}
 	return sort
+}
+
+func (s *Sort) DeepCopy() Sort {
+	sort := make(Sort, len(*s))
+	for i, v := range *s {
+		sort[i] = v
+	}
+	return sort
+}
+
+func (s *Sort) HasField(fields ...string) bool {
+	for _, v := range *s {
+		for _, field := range fields {
+			if v.Field == field {
+				return true
+			}
+		}
+	}
+	return false
 }

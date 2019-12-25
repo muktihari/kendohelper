@@ -219,3 +219,92 @@ func TestToAggregateSort(t *testing.T) {
 		})
 	}
 }
+
+func TestSortDeepCopy(t *testing.T) {
+	tt := []struct {
+		name     string
+		srcSort  kendohelper.Sort
+		handler  func(string) string
+		destSort kendohelper.Sort
+	}{
+		{
+			name: "deep copy sort",
+			srcSort: kendohelper.Sort{
+				kendohelper.SortElem{
+					Field: "First Name",
+					Dir:   "asc",
+				},
+				kendohelper.SortElem{
+					Field: "Last Name",
+					Dir:   "desc",
+				},
+			},
+			handler: strings.ToLower,
+			destSort: kendohelper.Sort{
+				kendohelper.SortElem{
+					Field: "first name",
+					Dir:   "asc",
+				},
+				kendohelper.SortElem{
+					Field: "last name",
+					Dir:   "desc",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		destSort := tc.srcSort.DeepCopy()
+		destSort.HandleField(tc.handler)
+
+		if !reflect.DeepEqual(tc.destSort, destSort) {
+			t.Errorf("%v should be %v, got %v", tc.name, tc.destSort, destSort)
+		}
+		if reflect.DeepEqual(tc.destSort, tc.srcSort) {
+			t.Errorf("%v srcFilter got %v, should not affected by handler", tc.name, tc.srcSort)
+		}
+	}
+}
+
+func TestSortHasField(t *testing.T) {
+	tt := []struct {
+		name   string
+		sort   kendohelper.Sort
+		fields []string
+		result bool
+	}{
+		{
+			name: "find fields in Sort",
+			sort: kendohelper.Sort{
+				kendohelper.SortElem{
+					Field: "Name",
+				},
+				kendohelper.SortElem{
+					Field: "City",
+				},
+			},
+			fields: []string{"City"},
+			result: true,
+		},
+		{
+			name: "find fields in Sort (2)",
+			sort: kendohelper.Sort{
+				kendohelper.SortElem{
+					Field: "Name",
+				},
+				kendohelper.SortElem{
+					Field: "City",
+				},
+			},
+			fields: []string{"Year"},
+			result: false,
+		},
+	}
+
+	for _, tc := range tt {
+		result := tc.sort.HasField(tc.fields...)
+		if result != result {
+			t.Errorf("%v should be %v, got %v", tc.name, tc.result, result)
+		}
+	}
+}

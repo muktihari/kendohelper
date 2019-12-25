@@ -636,3 +636,176 @@ func TestFilterDeepCopyTo(t *testing.T) {
 		}
 	}
 }
+
+func TestFilterDeepClone(t *testing.T) {
+	tt := []struct {
+		name       string
+		srcFilter  kendohelper.Filter
+		handler    kendohelper.FilterHandleFunc
+		destFilter kendohelper.Filter
+	}{
+		{
+			name: "apply lowercase handle to DeepClone's result",
+			srcFilter: kendohelper.Filter{
+				Filters: []kendohelper.Filter{
+					kendohelper.Filter{
+						Field:    "Name",
+						Operator: "eq",
+						Value:    "Hari",
+					},
+					kendohelper.Filter{
+						Field:    "Name",
+						Operator: "eq",
+						Value:    "Mukti",
+					},
+				},
+				Logic: "and",
+			},
+			handler: func(filter kendohelper.Filter) kendohelper.Filter {
+				filter.Field = strings.ToLower(filter.Field)
+				return filter
+			},
+			destFilter: kendohelper.Filter{
+				Filters: []kendohelper.Filter{
+					kendohelper.Filter{
+						Field:    "name",
+						Operator: "eq",
+						Value:    "Hari",
+					},
+					kendohelper.Filter{
+						Field:    "name",
+						Operator: "eq",
+						Value:    "Mukti",
+					},
+				},
+				Logic: "and",
+			},
+		},
+		{
+			name: "apply lowercase handle to DeepClone's result on nested Filter",
+			srcFilter: kendohelper.Filter{
+				Filters: []kendohelper.Filter{
+					kendohelper.Filter{
+						Field:    "Name",
+						Operator: "eq",
+						Value:    "Hari",
+					},
+					kendohelper.Filter{
+						Filters: []kendohelper.Filter{
+							kendohelper.Filter{
+								Field:    "Age",
+								Operator: "lte",
+								Value:    27,
+							},
+							kendohelper.Filter{
+								Field:    "Age",
+								Operator: "gte",
+								Value:    25,
+							},
+						},
+						Logic: "and",
+					},
+				},
+				Logic: "and",
+			},
+			handler: func(filter kendohelper.Filter) kendohelper.Filter {
+				filter.Field = strings.ToLower(filter.Field)
+				return filter
+			},
+			destFilter: kendohelper.Filter{
+				Filters: []kendohelper.Filter{
+					kendohelper.Filter{
+						Field:    "name",
+						Operator: "eq",
+						Value:    "Hari",
+					},
+					kendohelper.Filter{
+						Filters: []kendohelper.Filter{
+							kendohelper.Filter{
+								Field:    "age",
+								Operator: "lte",
+								Value:    27,
+							},
+							kendohelper.Filter{
+								Field:    "age",
+								Operator: "gte",
+								Value:    25,
+							},
+						},
+						Logic: "and",
+					},
+				},
+				Logic: "and",
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		destFilter := tc.srcFilter.DeepClone()
+		destFilter.Handle(tc.handler)
+
+		if !reflect.DeepEqual(tc.destFilter, destFilter) {
+			t.Errorf("%v should be %v, got %v", tc.name, tc.destFilter, destFilter)
+		}
+		if reflect.DeepEqual(tc.destFilter, tc.srcFilter) {
+			t.Errorf("%v srcFilter got %v, should not affected by handler", tc.name, tc.srcFilter)
+		}
+	}
+}
+
+func TestFilterHasField(t *testing.T) {
+	tt := []struct {
+		name   string
+		filter kendohelper.Filter
+		fields []string
+		result bool
+	}{
+		{
+			name: "find fields in Filter",
+			filter: kendohelper.Filter{
+				Filters: []kendohelper.Filter{
+					kendohelper.Filter{
+						Field: "First Name",
+					},
+					kendohelper.Filter{
+						Field: "_id",
+						Filters: []kendohelper.Filter{
+							kendohelper.Filter{
+								Field: "Email",
+							},
+						},
+					},
+				},
+			},
+			fields: []string{"Email", "First Name"},
+			result: true,
+		},
+		{
+			name: "find fields in Filter (2)",
+			filter: kendohelper.Filter{
+				Filters: []kendohelper.Filter{
+					kendohelper.Filter{
+						Field: "First Name",
+					},
+					kendohelper.Filter{
+						Field: "_id",
+						Filters: []kendohelper.Filter{
+							kendohelper.Filter{
+								Field: "Email",
+							},
+						},
+					},
+				},
+			},
+			fields: []string{"Date", "Last Name"},
+			result: false,
+		},
+	}
+
+	for _, tc := range tt {
+		result := tc.filter.HasField(tc.fields...)
+		if result != tc.result {
+			t.Errorf("%v should be %v, got %v", tc.name, tc.result, result)
+		}
+	}
+}

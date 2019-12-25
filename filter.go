@@ -227,15 +227,37 @@ func (f *Filter) ToAggregateFilter() toolkit.M {
 	return nil
 }
 
-// DeepCopyTo will copy filter as a branch new Filter to dest Filter
+// DeepCopyTo will copy filter as a branch new Filter to dest Filter. [Compability mode with previous version, it's recommended to use DeepClone]
 func (f *Filter) DeepCopyTo(dest *Filter) {
-	*dest = *f
+	*dest = f.DeepClone()
+}
+
+// DeepClone will clone filter deeply as a branch new Filter
+func (f *Filter) DeepClone() Filter {
+	filter := *f
 	if f.Filters == nil {
-		return
+		return filter
 	}
-	dest.Filters = make([]Filter, len(f.Filters))
-	copy(dest.Filters, f.Filters)
+	filter.Filters = make([]Filter, len(f.Filters))
 	for i := range f.Filters {
-		f.Filters[i].DeepCopyTo(&dest.Filters[i])
+		filter.Filters[i] = f.Filters[i].DeepClone()
 	}
+	return filter
+}
+
+// HasField checks whether filter contains specific field name
+func (f *Filter) HasField(fields ...string) bool {
+	if len(f.Filters) == 0 {
+		for _, field := range fields {
+			if f.Field == field {
+				return true
+			}
+		}
+	}
+	for i := range f.Filters {
+		if f.Filters[i].HasField(fields...) == true {
+			return true
+		}
+	}
+	return false
 }

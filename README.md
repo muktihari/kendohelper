@@ -1,6 +1,6 @@
 # kendohelper v2
 
-![kendohelper](https://img.shields.io/badge/version-2.0.0-blue.svg?style=flat)
+![kendohelper](https://img.shields.io/badge/version-2.0.2-blue.svg?style=flat)
 [![kendohelper](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/muktihari/kendohelper)
 ![kendohelper](https://img.shields.io/badge/test%20coverage-100%25-brightgreen.svg?style=flat)
 
@@ -226,11 +226,59 @@ payload.Filter.Handle(func(filter kendohelper.Filter) kendohelper.Filter {
 ```
 
 ### The Additional Func
+- Filter
+    - DeepClone
+    - HasField
+- Sort
+    - DeepClone
+    - HasField
+
+#### Copy Filter or Sort deeply to a new variable
+Filter has field "Filters" which is slice of Filter. In go, values of slice are passed by reference, to avoid making changes to the original Filter, use DeepClone instead
+
+Examples:
+```go
+// Let's say we we want to rename field in new filter (cloned filter) with this handler without affecting the original
+handler := func(field string) string {
+    if field == "name" {
+        return "clientdoc.name"
+    }
+    return field
+}
+
+// DON'T DO:
+newFilter := payload.Filter
+newSort := payload.Sort
+
+newFilter.HandleField(handler) // payload.Filter will also be affected
+newSort.HandleField(handler) // payload.Sort will also be affected
+
+// INSTEAD DO:
+newFilter := payload.Filter.DeepClone()
+newSort := payload.Sort.DeepClone()
+
+newFilter.HandleField(handler) // completely isolated, won't affect payload.Filter
+newSort.HandlerField(handler) // // completely isolated, won't affect payload.Sort
+```
+
+Note: These functions might be useful for example if we have Filter from kendo grid which its data is generated from an aggregate data (link to multiple collections/tables)
+
+#### Check deeply if Filter contains some fields
+Examples:
+```go
+isFilterHasField := payload.Filter.HasField("Name", "Nationality") // return bool
+// isFilterHasField will be true if any Field in Filter equals to any of the input fields (including nested Filter). Otherwise it's false
+
+isSortHasField := payload.Filter.HasField("Name", "Nationality") // return bool
+// isFilterHasField will be true if any Field in Sort equals to any of the input fields. Otherwise it's false
+```
+
+### 
+
+### In Compatibility mode
+> since 2.0.2
 - Filter: 
-  - DeepCopyTo
-
-
-Filter has field "Filters" which is slice of Filter. In go, values of slice are passed by reference, to avoid making changes to the original Filter, use DeepCopyTo instead
+    - DeepCopyTo
 
 ```go
 // DON'T DO:
@@ -246,4 +294,4 @@ newFilter.HandleField(strings.ToLower) // completely isolated, won't affect payl
 
 ---
 
-###### Thanks to [surya](https://github.com/dewanggasurya) and [radit](https://github.com/raditzlawliet) for supporting this project, any (usually unecessary) talk means a lot. :D - 2019
+###### Thanks to [surya](https://github.com/dewanggasurya) and [radit](https://github.com/raditzlawliet) for supporting this project, any (usually unecessary) talk means a lot. :D &copy; 2019-2020
