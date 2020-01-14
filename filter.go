@@ -106,6 +106,17 @@ func (f *Filter) ToDBOXFilter() *dbox.Filter {
 					"$options": "i",
 				},
 			}
+		case "endswith":
+			return dbox.Endwith(f.Field, valueStr)
+		case "doesnotendwith":
+			return &dbox.Filter{
+				Field: f.Field,
+				Op:    dbox.FilterOpEqual,
+				Value: toolkit.M{
+					"$regex":   `.*(?<!` + valueStr + `)$`,
+					"$options": "i",
+				},
+			}
 		case "contains":
 			return dbox.Contains(f.Field, valueStr)
 		case "doesnotcontain":
@@ -189,6 +200,16 @@ func (f *Filter) ToAggregateFilter() toolkit.M {
 		case "doesnotstartwith":
 			return toolkit.M{f.Field: toolkit.M{
 				"$regex":   `^(?!` + valueStr + `)\w+`,
+				"$options": "i",
+			}}
+		case "endswith":
+			return toolkit.M{f.Field: toolkit.M{
+				"$regex":   valueStr + `$`,
+				"$options": "i",
+			}}
+		case "doesnotendwith":
+			return toolkit.M{f.Field: toolkit.M{
+				"$regex":   `.*(?<!` + valueStr + `)$`,
 				"$options": "i",
 			}}
 		case "contains":
